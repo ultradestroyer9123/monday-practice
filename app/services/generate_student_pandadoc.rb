@@ -11,6 +11,7 @@ class GenerateStudentPandadoc
   def initialize(pulse_id = nil)
     @pulse_id = pulse_id
     @student_board_id = 18380266024  # Updated to match webhook board
+    @column_map = MondayBoardColumnMap.new(@student_board_id)
     @client = Monday::Client.new(
       token: MONDAY_DEV_KEY,
       version: '2024-10'
@@ -24,6 +25,7 @@ class GenerateStudentPandadoc
     document = create_document
     filename = download_document(document.uuid)
     upload_file_to_monday(filename)
+    set_status_to_created
   end
 
   private
@@ -99,7 +101,7 @@ class GenerateStudentPandadoc
       { name: "FirstName", value: "#{@student[:first_name]}" },
       { name: "LastName", value: "#{@student[:last_name]}" },
       { name: "Email", value: @student[:email] },
-      { name: "Address", value: @student[:address] },
+      { name: "Address", value: @student[:address] }
     ]
   end
 
@@ -118,42 +120,22 @@ class GenerateStudentPandadoc
   end
 
   def upload_file_to_monday(filename)
-    return unless @pulse_id && File.exist?(filename)
-    
-    file_path = File.expand_path(filename)
-    puts "Attempting to upload file for pulse_id: #{@pulse_id}"
-    
-    begin
-      # Get the column ID for "Files" column using the correct token
-      files_column_id = "files"  # Common Monday.com files column ID
-      
-      puts "Using Files column ID: #{files_column_id}"
-      args = {
-          board_id: @student_board_id,
-          item_id: @pulse_id.to_i,
-          column_id: files_column_id,
-          file: file_path
-        }
-      binding.pry
-      # Upload file to the Files column
-      file_response = @client.column.change_value(
-        args: args
-      )
-      
-      puts "File upload response: #{file_response.body.inspect}"
-      
-      if file_response.body.dig("data", "change_column_value")
-        puts "File uploaded successfully to Files column for student #{@pulse_id}"
-        File.delete(filename)  # Clean up local file
-        puts "Local file #{filename} deleted"
-      else
-        puts "Failed to upload file to Files column"
-        puts file_response.body.inspect
-      end
-    rescue => e
-      puts "Error uploading file to Monday.com: #{e.message}"
-      puts e.backtrace
-    end
+    args = {
+      item_id: @pulse_id,
+      column_id: @column_map.convert_name("Files"),
+      file: UploadIO.new(File.new(File.expand_path("./#{filename}")), 'application/pdf', filename)
+    }
+    @client.file.add_file_to_column(args: args, select: ['id'])
+  end
+
+  def set_status_to_created
+    args = {
+      board_id: @student_board_id,
+      item_id: @pulse_id,
+      column_id: @column_map.convert_name('PDF Status'),
+      value: 'File Created'
+    }
+    @client.column.change_value(args: args, select: ['id', 'name'])
   end
 
   def default_student

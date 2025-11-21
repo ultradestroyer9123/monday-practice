@@ -30,7 +30,7 @@ gem "solid_cable"
 
 # monday
 
-gem 'monday_ruby', '~> 1.0'
+gem 'monday_ruby', git: 'https://github.com/sanifhimani/monday_ruby.git', branch: 'feature/file_assets'
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
