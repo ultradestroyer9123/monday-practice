@@ -1,12 +1,3 @@
-GIT
-  remote: https://github.com/sanifhimani/monday_ruby.git
-  revision: 49f98c8227ba2978c20724526d79fd072be5b463
-  branch: feature/file_assets
-  specs:
-    monday_ruby (1.1.0)
-      base64 (~> 0.3.0)
-      multipart-post (~> 2.4)
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -220,6 +211,9 @@ GEM
       logger
     mini_mime (1.1.5)
     minitest (5.26.0)
+    monday_ruby (1.2.0)
+      base64 (~> 0.3.0)
+      multipart-post (~> 2.4)
     msgpack (1.8.0)
     multipart-post (2.4.1)
     net-http (0.8.0)
@@ -459,7 +453,7 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   kamal
-  monday_ruby!
+  monday_ruby (~> 1.2.0)
   panda_doc
   pg (~> 1.1)
   propshaft
