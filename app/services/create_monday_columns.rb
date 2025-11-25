@@ -20,14 +20,14 @@ class CreateMondayColumns
     puts "Columns created successfully for board ID #{@board_id}"
   end
 
-  def create_connect_board(connected_board_id, column_title: "Connected Board")
-    # Use MondayApiClient because the gem has issues with JSON in defaults
-    mutation = <<-GRAPHQL
+  def create_connect_board(connected_board_id:, column_title: "Connected Board")
+    # Step 1: Create the board_relation column with empty settings
+    create_mutation = <<-GRAPHQL
       create_column(
         board_id: #{@board_id},
         title: "#{column_title}",
         column_type: board_relation,
-        defaults: "{\\\"boardIds\\\":[#{connected_board_id.to_i}]}"
+        defaults: "{\\"settings\\":{}}"
       ) {
         id
         title
@@ -35,12 +35,39 @@ class CreateMondayColumns
       }
     GRAPHQL
     
-    result = @api_client.mutation(mutation.strip)
+    puts "DEBUG: Creating board_relation column with mutation:"
+    puts create_mutation
+    
+    result = @api_client.mutation(create_mutation.strip)
+    
+    puts "DEBUG: Create result: #{result.inspect}"
     
     if result['create_column']
       column = result['create_column']
-      puts "Created connect board column: #{column_title} linked to board #{connected_board_id}"
-      column['id']
+      column_id = column['id']
+      puts "Created board_relation column: #{column_title}"
+      
+      # Step 2: Update the column with the connected board ID
+      update_mutation = <<-GRAPHQL
+        change_column_value(
+          board_id: #{@board_id},
+          item_id: #{@board_id},
+          column_id: "#{column_id}",
+          value: "{\\"settings\\":{\\"boardIds\\":[#{connected_board_id.to_i}]}}"
+        ) {
+          id
+        }
+      GRAPHQL
+      
+      puts "DEBUG: Updating column with mutation:"
+      puts update_mutation
+      
+      puts "Linking board #{connected_board_id} to column #{column_title}"
+      update_result = @api_client.mutation(update_mutation.strip)
+      
+      puts "DEBUG: Update result: #{update_result.inspect}"
+      
+      column_id
     else
       puts "Failed to create connect board column"
       nil
