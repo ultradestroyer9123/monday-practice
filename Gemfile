@@ -49,7 +49,7 @@ gem 'rack-cors', '~> 3.0.0'
 gem 'panda_doc'
 
 # Load environment variables from .env file
-gem 'dotenv-rails', '~> 3.1'
+gem 'dotenv-rails', '~> 3.2'
 
 group :development, :test do
   #pry
